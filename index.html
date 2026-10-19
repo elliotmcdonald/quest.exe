@@ -38,8 +38,9 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 .dt{font-size:11px;letter-spacing:2px;color:var(--mut)}
 .hd{display:flex;align-items:center;gap:10px;padding:14px var(--gr) 0 var(--g)}
 .logo{flex:1;font-size:22px;letter-spacing:1px}.logo b{font-weight:400;color:var(--acc)}
-.pb{width:32px;height:32px;border:2px solid var(--fg);box-shadow:3px 3px 0 var(--fg);display:flex;align-items:center;justify-content:center;font-size:16px;flex:none;transition:transform .1s,box-shadow .1s}
-.pb:active,.bt:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--fg)}
+.pb{width:44px;height:44px;margin:-6px -6px -6px 0;display:flex;align-items:center;justify-content:center;flex:none;transition:transform .12s steps(2)}
+.pb:active{transform:scale(.88)}
+.bt:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--fg)}
 .pb span{display:block;transition:transform .25s cubic-bezier(.2,.9,.3,1.3)}.pb.o span{transform:rotate(90deg) scale(.8)}
 .tabs{display:flex;gap:18px;padding:16px var(--gr) 0 var(--g);overflow-x:auto;scrollbar-width:none}
 .tab{font-size:12px;letter-spacing:1px;color:var(--mut);padding-bottom:5px;border-bottom:2px solid transparent;white-space:nowrap}
@@ -133,7 +134,7 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
   <div class="spl" id="spl" role="button" aria-label="Tap to begin"><div class="gsh"></div><svg class="gm" viewBox="3 3 10 10" shape-rendering="crispEdges" aria-hidden="true"><path fill="#E79AB6" d="M7 3h2v1H7z M6 4h4v1H6z M5 5h6v1H5z M4 6h8v1H4z M3 7h10v2H3z M4 9h8v1H4z M5 10h6v1H5z M6 11h4v1H6z M7 12h2v1H7z"/><path fill="#F8D3E0" d="M7 3h1v1H7z M6 4h1v1H6z M5 5h1v1H5z M4 6h1v1H4z M6 6h1v1H6z"/><path fill="#B86F8B" d="M8 12h1v1H8z M9 11h1v1H9z M10 10h1v1h-1z M11 9h1v1h-1z M12 8h1v1h-1z"/></svg>
     <div class="dt" style="top:calc(34% + 156px);font-size:22px;letter-spacing:1px;color:var(--fg)">quest<span style="color:var(--acc)">.</span>exe</div>
     <div class="dt bl" style="top:calc(34% + 210px);color:var(--fg)">▸ tap to begin</div></div>
-  <div class="hd"><div class="logo" id="logo" role="button" aria-label="Sync">quest<b>.</b>exe<i class="syd" id="syd" hidden></i></div><button class="pb" id="cb" aria-label="This month"><span style="font-size:12px">▦</span></button><button class="pb" id="pb" aria-label="New quest"><span><svg viewBox="3 3 10 10" width="20" height="20" shape-rendering="crispEdges" aria-hidden="true"><path fill="#E79AB6" d="M7 3h2v1H7z M6 4h4v1H6z M5 5h6v1H5z M4 6h8v1H4z M3 7h10v2H3z M4 9h8v1H4z M5 10h6v1H5z M6 11h4v1H6z M7 12h2v1H7z"/><path fill="#F8D3E0" d="M7 3h1v1H7z M6 4h1v1H6z M5 5h1v1H5z M4 6h1v1H4z M6 6h1v1H6z"/><path fill="#B86F8B" d="M8 12h1v1H8z M9 11h1v1H9z M10 10h1v1h-1z M11 9h1v1h-1z M12 8h1v1h-1z"/></svg></span></button></div>
+  <div class="hd"><div class="logo" id="logo" role="button" aria-label="Sync">quest<b>.</b>exe<i class="syd" id="syd" hidden></i></div><button class="pb" id="cb" aria-label="This month"><span><svg viewBox="0 0 12 12" width="24" height="24" shape-rendering="crispEdges" aria-hidden="true"><path fill="#F2E4EA" d="M3 1h1v2H3z M8 1h1v2H8z M1 2h10v2H1z M1 4h1v7H1z M10 4h1v7h-1z M2 10h8v1H2z M3 5h1v1H3z M5 5h1v1H5z M7 5h1v1H7z M3 7h1v1H3z M5 7h1v1H5z"/><path fill="#E79AB6" d="M7 7h2v2H7z"/></svg></span></button><button class="pb" id="pb" aria-label="New quest"><span><svg viewBox="3 3 10 10" width="30" height="30" shape-rendering="crispEdges" aria-hidden="true"><path fill="#E79AB6" d="M7 3h2v1H7z M6 4h4v1H6z M5 5h6v1H5z M4 6h8v1H4z M3 7h10v2H3z M4 9h8v1H4z M5 10h6v1H5z M6 11h4v1H6z M7 12h2v1H7z"/><path fill="#F8D3E0" d="M7 3h1v1H7z M6 4h1v1H6z M5 5h1v1H5z M4 6h1v1H4z M6 6h1v1H6z"/><path fill="#B86F8B" d="M8 12h1v1H8z M9 11h1v1H9z M10 10h1v1h-1z M11 9h1v1h-1z M12 8h1v1h-1z"/></svg></span></button></div>
   <div class="tabs" id="tabs"></div>
   <div class="panel"><canvas id="cat" width="18" height="24" role="button" aria-label="Sumi, open her closet"></canvas>
     <div class="pinfo"><div class="dt lvrow"><span id="lv"></span><span id="xp"></span></div><div class="bar"><div id="xf"></div></div><button class="stat" id="stat"></button></div></div>
@@ -230,7 +231,7 @@ function qrow(q,L){const d=document.createElement('div');d.className='q';const s
   d.querySelector('.qr>.bx').onclick=e=>{e.stopPropagation();finish(q,d,e.currentTarget)};L.appendChild(d)}
 function render(anim){const c=st.cur,L=$('list'),td=iso(D0());L.innerHTML='';
   st.quests.filter(q=>q.b===c&&(filt==='all'||(filt==='today'?(q.due&&q.due<=td):q.tag===filt))).sort((a,b)=>(a.due||'9')<(b.due||'9')?-1:(a.due||'9')>(b.due||'9')?1:({hi:0,md:1,lo:2}[a.p]-{hi:0,md:1,lo:2}[b.p])).forEach(q=>qrow(q,L));
-  if(!L.children.length)L.innerHTML=`<div class="dt empty">${filt==='all'?'no quests yet':'nothing here'}<br>tap + to add one</div>`;
+  if(!L.children.length)L.innerHTML=`<div class="dt empty">${filt==='all'?'no quests yet':'nothing here'}<br>tap the gem to add one</div>`;
   if(anim)L.animate([{opacity:0,transform:'translateX(30px)'},{opacity:1,transform:'none'}],{duration:450,easing:'cubic-bezier(.2,.9,.3,1)'});hud()}
 function sparks(el,n){const r=el.getBoundingClientRect(),o=app.getBoundingClientRect();for(let i=0;i<n;i++){const s=document.createElement('span');s.className='sp';s.style.left=(r.left-o.left+r.width/2)+'px';s.style.top=(r.top-o.top+r.height/2)+'px';app.appendChild(s);s.animate([{transform:'none',opacity:1},{transform:`translate(${(Math.random()-.5)*110}px,${-60-Math.random()*120}px)`,opacity:0}],{duration:900+Math.random()*400,easing:'steps(8)',fill:'forwards'});setTimeout(()=>s.remove(),1400)}}
 function gain(n){st.xp+=n;let up=false;while(st.xp>=100){st.xp-=100;st.lv++;up=true}save();if(up){const un=Object.values(A).find(a=>a.lv===st.lv);setTimeout(()=>toast(un?`✦ level ${st.lv}! sumi unlocked: ${un.n}`:`✦ level ${st.lv}!`),1500)}}
