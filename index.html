@@ -379,8 +379,8 @@ function setSy(s,m=''){syState=s;syMsg=m;const d=$('syd');d.hidden=!me;d.classNa
 const syLabel=()=>syState==='ok'?'✦ synced':syState==='busy'?'syncing…':syMsg||'';
 function startLive(){if(live||!sb)return;live=sb.channel('docs').on('postgres_changes',{event:'*',schema:'public',table:'docs'},()=>syncSoon(300)).subscribe()}
 function sbInit(){if(sb)return sb;if(!window.supabase)return null;
-  sb=supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'questexe.auth'}});
-  sb.auth.onAuthStateChange((ev,s)=>{const u=s&&s.user||null,was=me;me=u;
+  sb=supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,storageKey:'questexe.auth'}});
+  sb.auth.onAuthStateChange((ev,s)=>{const u=s&&s.user||null,was=me;me=u;if(ev==='PASSWORD_RECOVERY')setTimeout(newPass,300);
     if(u&&!was)setTimeout(()=>{startLive();syncNow()},0);
     if(!u&&was){if(live){sb.removeChannel(live);live=null}setSy('off')}else setSy(syState)});return sb}
 function syncSheet(){sfx('pop');if(!sbInit()){openSh(`<div class="st">sync</div><div class="dt">sync couldn’t load · check your connection</div>`);return}
@@ -393,7 +393,7 @@ function syncSheet(){sfx('pop');if(!sbInit()){openSh(`<div class="st">sync</div>
   let mode='in';openSh(`<div class="st">sync</div><div class="dt" style="margin-bottom:8px">sign in to share quests with each other</div>
     <input class="in" id="sye" type="email" inputmode="email" autocomplete="email" placeholder="your email" autocapitalize="off">
     <input class="in" id="syp" type="password" autocomplete="current-password" placeholder="password">
-    <div class="dt er" id="syer"></div><div class="row2"><button class="dt" id="symode">first time? create account</button><button class="bt" id="sygo">sign in</button></div>`);
+    <div class="dt er" id="syer"></div><div class="row2"><button class="dt" id="symode">first time? create account</button><button class="bt" id="sygo">sign in</button></div><button class="dt" id="syfg" style="margin-top:16px">forgot password?</button>`);
   const er=t=>$('syer').textContent=t;setTimeout(()=>$('sye').focus(),350);
   $('symode').onclick=()=>{sfx('tap');mode=mode==='in'?'up':'in';er('');$('sygo').textContent=mode==='in'?'sign in':'create account';$('symode').textContent=mode==='in'?'first time? create account':'have an account? sign in';$('syp').placeholder=mode==='in'?'password':'choose a password (8+ characters)';$('syp').autocomplete=mode==='in'?'current-password':'new-password'};
   $('sygo').onclick=async()=>{const b=$('sygo'),email=$('sye').value.trim().toLowerCase(),password=$('syp').value;er('');
@@ -403,7 +403,16 @@ function syncSheet(){sfx('pop');if(!sbInit()){openSh(`<div class="st">sync</div>
     if(r.error){const m=r.error.message||'';er(/not confirmed/i.test(m)?'this account isn’t confirmed yet · confirm it in supabase (authentication › users)':/invalid login/i.test(m)?'no account with that email + password · first time? create an account':/not authorized|signups? not allowed|disabled/i.test(m)?'new sign-ups are turned off in supabase':/already registered|already exists/i.test(m)?'that email already has an account · sign in instead':/rate|seconds/i.test(m)?'too many tries · wait a minute':m.toLowerCase());return}
     if(!r.data.session){er('account made · turn off “confirm email” in supabase, then sign in');return}
     sfx('grant');shut();toast('✦ signed in · syncing')};
+  $('syfg').onclick=async()=>{const email=$('sye').value.trim().toLowerCase();if(!/^\S+@\S+\.\S+$/.test(email)){er('type your email above first');return}sfx('tap');
+    const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});
+    er(error?(/rate|seconds/i.test(error.message)?'too many tries · wait a minute':error.message.toLowerCase()):'check your email for a reset link · it opens in safari, set a new password there, then sign in here')};
   ['sye','syp'].forEach(id=>$(id).onkeydown=e=>{if(e.key==='Enter')$('sygo').click()})}
+function newPass(){spl.hidden=true;openSh(`<div class="st">new password</div><div class="dt" style="margin-bottom:8px">choose a new password for ${esc(me&&me.email||'your account')}</div>
+    <input class="in" id="np" type="password" autocomplete="new-password" placeholder="new password (8+ characters)"><div class="dt er" id="nper"></div>
+    <div class="row2" style="justify-content:center"><button class="bt" id="npgo">save password</button></div>`);
+  $('npgo').onclick=async()=>{const pw=$('np').value;if(pw.length<8){$('nper').textContent='use at least 8 characters';return}const b=$('npgo');b.disabled=true;b.textContent='saving…';
+    const {error}=await sb.auth.updateUser({password:pw});b.disabled=false;b.textContent='save password';
+    if(error){$('nper').textContent=error.message.toLowerCase();return}sfx('grant');shut();history.replaceState(null,'',location.pathname);toast('✦ password changed · sign in with it on the app')}}
 $('logo').onclick=syncSheet;
 sbInit();
 setInterval(()=>{if(!document.hidden)syncSoon(0)},60000);
