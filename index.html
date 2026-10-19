@@ -387,21 +387,20 @@ function syncSheet(){sfx('pop');if(!sbInit()){openSh(`<div class="st">sync</div>
     <div class="row2"><button class="dt" id="syout" style="color:var(--acc)">sign out</button><button class="bt" id="synow">sync now</button></div>`);
     $('synow').onclick=()=>{sfx('tap');syncNow()};
     let armed=false;$('syout').onclick=async()=>{if(!armed){armed=true;sfx('tap');$('syout').textContent='tap again to sign out';return}sfx('undo');await sb.auth.signOut();sy={last:{},cur:null};sySave();shut();toast('signed out · quests stay on this device')};return}
-  openSh(`<div class="st">sync</div><div class="dt" style="margin-bottom:8px">sign in with your email to share quests with each other. we’ll email you a code.</div>
+  let mode='in';openSh(`<div class="st">sync</div><div class="dt" style="margin-bottom:8px">sign in to share quests with each other</div>
     <input class="in" id="sye" type="email" inputmode="email" autocomplete="email" placeholder="your email" autocapitalize="off">
-    <div id="syc" hidden><input class="in" id="syk" inputmode="numeric" autocomplete="one-time-code" placeholder="code from the email" style="letter-spacing:4px;font-size:18px"></div>
-    <div class="dt er" id="syer"></div><div class="row2" style="justify-content:center"><button class="bt" id="sygo">send code</button></div>`);
-  let step=0,email='';const er=t=>$('syer').textContent=t;setTimeout(()=>$('sye').focus(),350);
-  $('sygo').onclick=async()=>{const b=$('sygo');er('');
-    if(step===0){email=$('sye').value.trim().toLowerCase();if(!/^\S+@\S+\.\S+$/.test(email)){er('that email doesn’t look right');return}
-      b.disabled=true;b.textContent='sending…';const {error}=await sb.auth.signInWithOtp({email,options:{shouldCreateUser:true}});b.disabled=false;
-      if(error){b.textContent='send code';er(/rate|seconds/i.test(error.message)?'too many tries · wait a minute':error.message.toLowerCase());return}
-      step=1;sfx('add');$('sye').disabled=true;$('syc').hidden=false;$('syk').focus();b.textContent='sign in';return}
-    const tok=$('syk').value.replace(/\D/g,'');if(tok.length<6){er('enter the code from the email');return}
-    b.disabled=true;b.textContent='checking…';let r=await sb.auth.verifyOtp({email,token:tok,type:'email'});if(r.error)r=await sb.auth.verifyOtp({email,token:tok,type:'signup'});b.disabled=false;
-    if(r.error){b.textContent='sign in';er('that code didn’t work · check it or send a new one');return}
+    <input class="in" id="syp" type="password" autocomplete="current-password" placeholder="password">
+    <div class="dt er" id="syer"></div><div class="row2"><button class="dt" id="symode">first time? create account</button><button class="bt" id="sygo">sign in</button></div>`);
+  const er=t=>$('syer').textContent=t;setTimeout(()=>$('sye').focus(),350);
+  $('symode').onclick=()=>{sfx('tap');mode=mode==='in'?'up':'in';er('');$('sygo').textContent=mode==='in'?'sign in':'create account';$('symode').textContent=mode==='in'?'first time? create account':'have an account? sign in';$('syp').placeholder=mode==='in'?'password':'choose a password (8+ characters)';$('syp').autocomplete=mode==='in'?'current-password':'new-password'};
+  $('sygo').onclick=async()=>{const b=$('sygo'),email=$('sye').value.trim().toLowerCase(),password=$('syp').value;er('');
+    if(!/^\S+@\S+\.\S+$/.test(email)){er('that email doesn’t look right');return}if(password.length<(mode==='up'?8:1)){er(mode==='up'?'use at least 8 characters':'enter your password');return}
+    b.disabled=true;const lbl=b.textContent;b.textContent='one sec…';
+    const r=mode==='in'?await sb.auth.signInWithPassword({email,password}):await sb.auth.signUp({email,password});b.disabled=false;b.textContent=lbl;
+    if(r.error){const m=r.error.message||'';er(/invalid login/i.test(m)?'email or password is wrong · first time? create an account':/already registered|already exists/i.test(m)?'that email already has an account · sign in instead':/rate|seconds/i.test(m)?'too many tries · wait a minute':m.toLowerCase());return}
+    if(!r.data.session){er('account made · turn off “confirm email” in supabase, then sign in');return}
     sfx('grant');shut();toast('✦ signed in · syncing')};
-  $('sye').onkeydown=e=>{if(e.key==='Enter')$('sygo').click()};$('syk').onkeydown=e=>{if(e.key==='Enter')$('sygo').click()}}
+  ['sye','syp'].forEach(id=>$(id).onkeydown=e=>{if(e.key==='Enter')$('sygo').click()})}
 $('logo').onclick=syncSheet;
 sbInit();
 setInterval(()=>{if(!document.hidden)syncSoon(0)},60000);
