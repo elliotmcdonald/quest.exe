@@ -400,7 +400,7 @@ function syncSheet(){sfx('pop');if(!sbInit()){openSh(`<div class="st">sync</div>
     if(!/^\S+@\S+\.\S+$/.test(email)){er('that email doesn’t look right');return}if(password.length<(mode==='up'?8:1)){er(mode==='up'?'use at least 8 characters':'enter your password');return}
     b.disabled=true;const lbl=b.textContent;b.textContent='one sec…';
     const r=mode==='in'?await sb.auth.signInWithPassword({email,password}):await sb.auth.signUp({email,password});b.disabled=false;b.textContent=lbl;
-    if(r.error){const m=r.error.message||'';er(/invalid login/i.test(m)?'email or password is wrong · first time? create an account':/already registered|already exists/i.test(m)?'that email already has an account · sign in instead':/rate|seconds/i.test(m)?'too many tries · wait a minute':m.toLowerCase());return}
+    if(r.error){const m=r.error.message||'';er(/not confirmed/i.test(m)?'this account isn’t confirmed yet · confirm it in supabase (authentication › users)':/invalid login/i.test(m)?'no account with that email + password · first time? create an account':/not authorized|signups? not allowed|disabled/i.test(m)?'new sign-ups are turned off in supabase':/already registered|already exists/i.test(m)?'that email already has an account · sign in instead':/rate|seconds/i.test(m)?'too many tries · wait a minute':m.toLowerCase());return}
     if(!r.data.session){er('account made · turn off “confirm email” in supabase, then sign in');return}
     sfx('grant');shut();toast('✦ signed in · syncing')};
   ['sye','syp'].forEach(id=>$(id).onkeydown=e=>{if(e.key==='Enter')$('sygo').click()})}
