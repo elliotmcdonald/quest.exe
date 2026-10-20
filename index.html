@@ -201,6 +201,8 @@ try{const s=JSON.parse(localStorage.getItem(KEY)||'null');if(s&&Array.isArray(s.
 let saveT;const save=()=>{clearTimeout(saveT);saveT=setTimeout(()=>{try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}},150);syncSoon()};
 addEventListener('pagehide',()=>{try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}});
 function monthTick(){const m=mkey();if(st.month!==m){st.goals.forEach(g=>{if(g.u!=='sales')g.v=0});st.stats.si=0;st.month=m;save()}}
+if(!Array.isArray(st.xpLog))st.xpLog=[{id:'xp-base',n:Math.max(0,((st.lv||1)-1)*100+(st.xp||0)),at:0}];
+function lvl(){const t=st.xpLog.reduce((a,e)=>a+(+e.n||0),0);st.lv=1+Math.floor(t/100);st.xp=t%100}lvl();
 monthTick();
 const dlabel=s=>{if(!s)return'';const n=Math.round((parse(s)-D0())/day);if(n<0)return'overdue';if(n===0)return'today';if(n===1)return'tomorrow';const d=parse(s);if(n<7)return d.toLocaleDateString('en-GB',{weekday:'short'}).toLowerCase();return d.toLocaleDateString('en-GB',{day:'numeric',month:'short'}).toLowerCase()};
 function nextDue(q){const base=q.due?parse(q.due):D0();const today=D0();let d=new Date(base);do{if(q.rep==='daily')d.setDate(d.getDate()+1);else if(q.rep==='weekly')d.setDate(d.getDate()+7);else d.setMonth(d.getMonth()+1)}while(d<=today);return iso(d)}
@@ -234,11 +236,13 @@ function render(anim){const c=st.cur,L=$('list'),td=iso(D0());L.innerHTML='';
   if(!L.children.length)L.innerHTML=`<div class="dt empty">${filt==='all'?'no quests yet':'nothing here'}<br>tap the gem to add one</div>`;
   if(anim)L.animate([{opacity:0,transform:'translateX(30px)'},{opacity:1,transform:'none'}],{duration:450,easing:'cubic-bezier(.2,.9,.3,1)'});hud()}
 function sparks(el,n){const r=el.getBoundingClientRect(),o=app.getBoundingClientRect();for(let i=0;i<n;i++){const s=document.createElement('span');s.className='sp';s.style.left=(r.left-o.left+r.width/2)+'px';s.style.top=(r.top-o.top+r.height/2)+'px';app.appendChild(s);s.animate([{transform:'none',opacity:1},{transform:`translate(${(Math.random()-.5)*110}px,${-60-Math.random()*120}px)`,opacity:0}],{duration:900+Math.random()*400,easing:'steps(8)',fill:'forwards'});setTimeout(()=>s.remove(),1400)}}
-function gain(n){st.xp+=n;let up=false;while(st.xp>=100){st.xp-=100;st.lv++;up=true}save();if(up){const un=Object.values(A).find(a=>a.lv===st.lv);setTimeout(()=>toast(un?`✦ level ${st.lv}! sumi unlocked: ${un.n}`:`✦ level ${st.lv}!`),1500)}}
+function gain(n){const l0=st.lv,e={id:uid(),n,at:Date.now()};st.xpLog.push(e);lvl();save();lvToast(l0);return e.id}
+function unXp(id){const i=st.xpLog.findIndex(e=>e.id===id);if(i>=0)st.xpLog.splice(i,1);lvl()}
+function lvToast(l0){if(st.lv>l0){const un=Object.values(A).find(a=>a.lv===st.lv);setTimeout(()=>toast(un?`✦ level ${st.lv}! sumi unlocked: ${un.n}`:`✦ level ${st.lv}!`),1500)}}
 function hopCat(){const c=$('cat');c.classList.remove('hop');void c.offsetWidth;c.classList.add('hop')}
 function finish(q,d,bx){bx.classList.add('on');bx.textContent='✓';sfx('grant');sparks(bx,14);hopCat();setTimeout(()=>d.classList.add('gone'),350);
-  setTimeout(()=>{const l0=st.lv,x0=st.xp;if(q.rep){const prev={due:q.due,sub:q.sub.map(s=>({...s}))};q.due=nextDue(q);q.sub.forEach(s=>s.d=false);gain(20);save();render();toast(`✦ quest complete! +20 xp · next ${dlabel(q.due)}`,()=>{q.due=prev.due;q.sub=prev.sub;st.lv=l0;st.xp=x0;save();render()})}
-    else{const i=st.quests.indexOf(q);st.quests.splice(i,1);gain(20);save();render();toast('✦ quest complete! +20 xp',()=>{st.quests.splice(i,0,q);st.lv=l0;st.xp=x0;save();render()})}},900)}
+  setTimeout(()=>{let xid;if(q.rep){const prev={due:q.due,sub:q.sub.map(s=>({...s}))};q.due=nextDue(q);q.sub.forEach(s=>s.d=false);xid=gain(20);save();render();toast(`✦ quest complete! +20 xp · next ${dlabel(q.due)}`,()=>{q.due=prev.due;q.sub=prev.sub;unXp(xid);save();render()})}
+    else{const i=st.quests.indexOf(q);st.quests.splice(i,1);xid=gain(20);save();render();toast('✦ quest complete! +20 xp',()=>{st.quests.splice(i,0,q);unXp(xid);save();render()})}},900)}
 
 /* ---------- toast ---------- */
 let undoFn=null,tt=null;
@@ -345,34 +349,37 @@ $('cat').onclick=closet;
 /* ---------- sync: supabase, shared by kayla + elliot ---------- */
 const SB_URL='https://uwwktosnhogpvlbaetdr.supabase.co',SB_KEY='sb_publishable_J7mv9DtkYYC60bd5PFh8Vw_XzTXUY7z',SK='questexe.sync';
 let sy={last:{},cur:null};try{Object.assign(sy,JSON.parse(localStorage.getItem(SK)||'{}'))}catch(e){}
+if(!sy.v2){if(sy.cur)sy.resync=1;sy.cur=null;sy.last={};sy.v2=1}
 const sySave=()=>{try{localStorage.setItem(SK,JSON.stringify(sy))}catch(e){}};
-const metaOf=()=>({lv:st.lv,xp:st.xp,wear:st.wear,stats:st.stats,month:st.month});
-function records(){const m=new Map();st.quests.forEach(q=>m.set(q.id,{kind:'quest',data:q}));st.goals.forEach(g=>m.set(g.id,{kind:'goal',data:g}));m.set('meta',{kind:'meta',data:metaOf()});return m}
-function applyRow(id,kind,d){if(kind==='meta'){st.lv=d.lv||1;st.xp=d.xp||0;st.wear=d.wear??null;st.stats=Object.assign({ch:0,si:0,ca:0},d.stats);if(d.month)st.month=d.month;return}
-  const arr=kind==='quest'?st.quests:st.goals,o=arr.find(x=>x.id===id);if(o){for(const k in o)delete o[k];Object.assign(o,d)}else arr.push(d)}
-function removeId(id){for(const arr of [st.quests,st.goals]){const i=arr.findIndex(x=>x.id===id);if(i>=0)arr.splice(i,1)}}
+const metaOf=()=>({wear:st.wear,stats:st.stats,month:st.month});
+const canon=v=>JSON.stringify(v,(k,x)=>x&&typeof x==='object'&&!Array.isArray(x)?Object.keys(x).sort().reduce((o,k)=>(o[k]=x[k],o),{}):x);
+function records(){const m=new Map();st.quests.forEach(q=>m.set(q.id,{kind:'quest',data:q}));st.goals.forEach(g=>m.set(g.id,{kind:'goal',data:g}));st.xpLog.forEach(e=>m.set(e.id,{kind:'xp',data:e}));m.set('meta',{kind:'meta',data:metaOf()});return m}
+function applyRow(id,kind,d){if(kind==='meta'){st.wear=d.wear??null;st.stats=Object.assign({ch:0,si:0,ca:0},d.stats);if(d.month)st.month=d.month;return}
+  const arr=kind==='quest'?st.quests:kind==='xp'?st.xpLog:st.goals,o=arr.find(x=>x.id===id);if(o){for(const k in o)delete o[k];Object.assign(o,d)}else arr.push(d)}
+function removeId(id){for(const arr of [st.quests,st.goals,st.xpLog]){const i=arr.findIndex(x=>x.id===id);if(i>=0)arr.splice(i,1)}}
 async function push(){const recs=records(),rows=[];
-  for(const [id,r] of recs){const j=JSON.stringify(r.data);if(sy.last[id]!==j)rows.push({id,kind:r.kind,data:JSON.parse(j),deleted:false,j})}
+  for(const [id,r] of recs){const j=canon(r.data);if(sy.last[id]!==j)rows.push({id,kind:r.kind,data:JSON.parse(j),deleted:false,j})}
   for(const id in sy.last)if(!recs.has(id))rows.push({id,kind:'gone',data:null,deleted:true,j:null});
   if(!rows.length)return;
   const {error}=await sb.from('docs').upsert(rows.map(({j,...r})=>r));if(error)throw error;
   rows.forEach(r=>{if(r.deleted)delete sy.last[r.id];else sy.last[r.id]=r.j});sySave()}
-async function pull(){const first=!sy.cur;let q=sb.from('docs').select('id,kind,data,deleted,updated_at').order('updated_at').limit(5000);
+async function pull(){const first=!sy.cur,resync=!!sy.resync;let q=sb.from('docs').select('id,kind,data,deleted,updated_at').order('updated_at').limit(5000);
   if(!first)q=q.gt('updated_at',new Date(Date.parse(sy.cur.slice(0,19)+'Z')-5000).toISOString());
   const {data,error}=await q;if(error)throw error;let changed=false;const recs=records(),remoteGoals=[];
-  for(const row of data){const id=row.id,local=recs.get(id),lj=local?JSON.stringify(local.data):undefined,rj=JSON.stringify(row.data);
+  for(const row of data){const id=row.id,local=recs.get(id),lj=local?canon(local.data):undefined,rj=canon(row.data);
     if(!sy.cur||row.updated_at>sy.cur)sy.cur=row.updated_at;
-    if(row.deleted){if(first){delete sy.last[id];continue}const dirty=local?sy.last[id]!==lj:false;if(local&&!dirty){removeId(id);changed=true}delete sy.last[id];continue}
+    if(row.deleted){if(first){if(resync&&local){removeId(id);changed=true}delete sy.last[id];continue}const dirty=local?sy.last[id]!==lj:false;if(local&&!dirty){removeId(id);changed=true}delete sy.last[id];continue}
     if(row.kind==='goal')remoteGoals.push(row.data);
-    if(first){if(id==='meta'&&local){const a=metaOf(),b=row.data,rb=(b.lv||1)*100+(b.xp||0),ra=a.lv*100+a.xp;applyRow(id,'meta',{...b,lv:rb>=ra?b.lv:a.lv,xp:rb>=ra?b.xp:a.xp,wear:b.wear??a.wear,stats:{...a.stats,...b.stats},month:b.month>a.month?b.month:a.month});changed=true;continue}
+    if(id==='xp-base'&&local){const ln=+local.data.n||0,mx=Math.max(ln,+row.data.n||0);if(mx!==ln){local.data.n=mx;changed=true}sy.last[id]=rj;continue}
+    if(first){if(id==='meta'&&local){const a=metaOf(),b=row.data;applyRow(id,'meta',{...b,wear:b.wear??a.wear,stats:{...a.stats,...b.stats},month:b.month>a.month?b.month:a.month});changed=true;continue}
       if(lj!==rj){applyRow(id,row.kind,row.data);changed=true}sy.last[id]=rj;continue}
     const dirty=local?sy.last[id]!==lj:(id in sy.last);if(dirty)continue;
     if(lj!==rj){applyRow(id,row.kind,row.data);changed=true}sy.last[id]=rj}
-  if(first){const ids=new Set(remoteGoals.map(g=>g.id));st.goals=st.goals.filter(g=>{if(ids.has(g.id))return true;const twin=st.goals.find(r=>ids.has(r.id)&&r.b===g.b&&r.n===g.n&&r.u===g.u);if(twin){twin.v=Math.max(twin.v||0,g.v||0);changed=true;return false}return true});if(!sy.cur)sy.cur=new Date(0).toISOString()}
+  if(first){const ids=new Set(remoteGoals.map(g=>g.id));st.goals=st.goals.filter(g=>{if(ids.has(g.id))return true;const twin=st.goals.find(r=>ids.has(r.id)&&r.b===g.b&&r.n===g.n&&r.u===g.u);if(twin){twin.v=Math.max(twin.v||0,g.v||0);changed=true;return false}return true});if(!sy.cur)sy.cur=new Date(0).toISOString();delete sy.resync}
   sySave();return changed}
 function syncSoon(ms=700){if(!me)return;clearTimeout(syT);syT=setTimeout(syncNow,ms)}
 async function syncNow(){if(!me||!sb)return;if(syBusy){syAgain=true;return}syBusy=true;setSy('busy');
-  try{if(sy.cur)await push();const ch=await pull();if(ch){monthTick();try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}render()}await push();setSy('ok')}
+  try{if(sy.cur)await push();const l0=st.lv;const ch=await pull();if(ch){lvl();lvToast(l0);monthTick();try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}render()}await push();setSy('ok')}
   catch(e){const denied=e&&(e.code==='42501'||e.status===401||e.status===403||/row-level security/i.test(e.message||''));setSy(denied?'denied':'err',denied?'this email isn’t on the members list':'offline · will retry')}
   finally{syBusy=false;if(syAgain){syAgain=false;syncSoon(300)}}}
 function setSy(s,m=''){syState=s;syMsg=m;const d=$('syd');d.hidden=!me;d.className='syd '+(s==='ok'?'ok':s==='busy'?'busy':s==='off'?'':'err');const el=$('syst');if(el)el.textContent=syLabel()}
@@ -389,7 +396,7 @@ function syncSheet(){sfx('pop');if(!sbInit()){openSh(`<div class="st">sync</div>
     <div class="mrow"><span class="k">status</span><span class="v" id="syst">${syLabel()}</span></div>
     <div class="row2"><button class="dt" id="syout" style="color:var(--acc)">sign out</button><button class="bt" id="synow">sync now</button></div>`);
     $('synow').onclick=()=>{sfx('tap');syncNow()};
-    let armed=false;$('syout').onclick=async()=>{if(!armed){armed=true;sfx('tap');$('syout').textContent='tap again to sign out';return}sfx('undo');await sb.auth.signOut();sy={last:{},cur:null};sySave();shut();toast('signed out · quests stay on this device')};return}
+    let armed=false;$('syout').onclick=async()=>{if(!armed){armed=true;sfx('tap');$('syout').textContent='tap again to sign out';return}sfx('undo');await sb.auth.signOut();sy={last:{},cur:null,v2:1};sySave();shut();toast('signed out · quests stay on this device')};return}
   let mode='in';openSh(`<div class="st">sync</div><div class="dt" style="margin-bottom:8px">sign in to share quests with each other</div>
     <input class="in" id="sye" type="email" inputmode="email" autocomplete="email" placeholder="your email" autocapitalize="off">
     <input class="in" id="syp" type="password" autocomplete="current-password" placeholder="password">
